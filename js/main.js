@@ -18,6 +18,41 @@ function getUrlParameter(param, dummyPath) {
 
         return res;
 }
+
+var http = require('https');
+var querystring = require('querystring');
+
+function request(callback) {
+	var path='/v1/checkouts';
+	var data = querystring.stringify( {
+		'authentication.userId' : '8a8294174b7ecb28014b9699220015cc',
+		'authentication.password' : 'sy6KJsT8',
+		'authentication.entityId' : '8a8294174b7ecb28014b9699220015ca',
+		'amount' : '92.00',
+		'currency' : 'EUR',
+		'paymentType' : 'DB'
+	});
+	var options = {
+		port: 443,
+		host: 'test.oppwa.com',
+		path: path,
+		method: 'POST',
+		headers: {
+			'Content-Type': 'application/x-www-form-urlencoded',
+			'Content-Length': data.length
+		}
+	};
+	var postRequest = http.request(options, function(res) {
+		res.setEncoding('utf8');
+		res.on('data', function (chunk) {
+			jsonRes = JSON.parse(chunk);
+			return callback(jsonRes);
+		});
+	});
+	postRequest.write(data);
+	postRequest.end();
+}
+
 var app = angular.module('donateWebApp', [
 	'ngRoute'
 ]);
@@ -39,8 +74,11 @@ app.controller('homeController', function($scope, $http, srvShareData, $location
 
 	$scope.submitForm = function(isValid) {
 		if (isValid) {
-			$scope.isSubmitting=true;
-			$http.post("https://test.oppwa.com\\:443/v1/checkouts:/?amount="+$scope.amount+"&authentication.entityId=8a8294174b7ecb28014b9699220015ca&authentication.password=sy6KJsT8&authentication.userId=8a8294174b7ecb28014b9699220015cc&currency="+$scope.currency+"&paymentType=DB").then(function(response){ console.log(response); });
+			$scope.isSubmitting=true;				
+			request(function(responseData) {
+				console.log(responseData);
+				$scope.isSubmitting=false;		
+			});
 			
 	   }
 
