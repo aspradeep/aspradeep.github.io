@@ -41,7 +41,7 @@ app.controller('homeController', function($scope, $http, srvShareData, $location
 		if (isValid) {
 			$scope.isSubmitting=true;
 			$http({
-			url: 'checkout.php',
+			url: 'http://kavisoftek.in/dev/checkout.php',
 			method: 'POST',
 			params: {  amount: $scope.amount, currency: $scope.currency },
 			headers: { 'Content-Type': 'application/x-www-form-urlencoded'} }).success(function(data) { 	
