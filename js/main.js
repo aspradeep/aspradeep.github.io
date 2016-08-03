@@ -50,8 +50,11 @@ app.controller('homeController', function($scope, $http, srvShareData, $location
                     'Content-Type': 'application/x-www-form-urlencoded;charset=utf-8;'
                 }
             }
-			
-			$http.post('checkout.php', formData, config) .success(function(data) { 	
+			 $http({
+                url: 'checkout.php',
+                method: 'POST',
+                params: {  amount: $scope.amount, currency: $scope.currency },
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' }).success(function(data) { 	
 				$scope.isSubmitting=false;	
 				console.log(data);
 				if ( ! data.success) {				
@@ -112,8 +115,11 @@ app.controller('thankyouController', function($scope, $http, srvShareData, $loca
 			'Content-Type': 'application/x-www-form-urlencoded;charset=utf-8;'
 		}
 	}
-	
-	$http.post('process.php', resourceData, config) .success(function(data) { 	
+	 $http({
+		url: 'process.php',
+		method: 'POST',
+		params: {  resourcePath: $scope.resourcePath },
+		headers: { 'Content-Type': 'application/x-www-form-urlencoded' }).success(function(data) { 	
 		console.log(data);
 		if ( ! data.success) {				
 			if (data.errors.currency) {
