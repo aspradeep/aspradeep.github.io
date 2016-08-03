@@ -40,28 +40,8 @@ app.controller('homeController', function($scope, $http, srvShareData, $location
 	$scope.submitForm = function(isValid) {
 		if (isValid) {
 			$scope.isSubmitting=true;
-			$http({
-			url: 'http://kavisoftek.in/dev/checkout.php',
-			method: 'POST',
-			params: {  amount: $scope.amount, currency: $scope.currency },
-			headers: { 'Content-Type': 'application/x-www-form-urlencoded'} }).success(function(data) { 	
-				$scope.isSubmitting=false;	
-				console.log(data);
-				if ( ! data.success) {				
-					if (data.errors.currency) {
-						$('#currency-group').addClass('has-error');
-						$('#currency-group .help-block').html(data.errors.currency);
-					}
-					
-					if (data.errors.amount) {
-						$('#amount-group').addClass('has-error');
-						$('#amount-group .help-block').html(data.errors.amount);
-					}
-				
-				} else {
-					$scope.shareMyData(data.responseData);
-				}
-			});
+			$http.post("https://test.oppwa.com\\:443/v1/checkouts:/?amount="+$scope.amount+"&authentication.entityId=8a8294174b7ecb28014b9699220015ca&authentication.password=sy6KJsT8&authentication.userId=8a8294174b7ecb28014b9699220015cc&currency="+$scope.currency+"&paymentType=DB").then(function(response){ console.log(response); });
+			
 	   }
 
 	};
