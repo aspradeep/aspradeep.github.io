@@ -40,21 +40,11 @@ app.controller('homeController', function($scope, $http, srvShareData, $location
 	$scope.submitForm = function(isValid) {
 		if (isValid) {
 			$scope.isSubmitting=true;
-			let formData = $.param({
-                amount: $scope.amount,
-                currency: $scope.currency
-            });
-        
-            let config = {
-                headers : {
-                    'Content-Type': 'application/x-www-form-urlencoded;charset=utf-8;'
-                }
-            }
-			 $http({
-                url: 'checkout.php',
-                method: 'POST',
-                params: {  amount: $scope.amount, currency: $scope.currency },
-                headers: { 'Content-Type': 'application/x-www-form-urlencoded' }).success(function(data) { 	
+			$http({
+			url: 'checkout.php',
+			method: 'POST',
+			params: {  amount: $scope.amount, currency: $scope.currency },
+			headers: { 'Content-Type': 'application/x-www-form-urlencoded'} }).success(function(data) { 	
 				$scope.isSubmitting=false;	
 				console.log(data);
 				if ( ! data.success) {				
@@ -105,21 +95,11 @@ app.controller('paymentController', function($scope, srvShareData) {
 
 app.controller('thankyouController', function($scope, $http, srvShareData, $location) {
 	let resourcePath = getUrlParameter('id');
-	alert(resourcePath);
-	let resourceData = $.param({
-		resourcePath: $scope.resourcePath
-	});
-
-	let config = {
-		headers : {
-			'Content-Type': 'application/x-www-form-urlencoded;charset=utf-8;'
-		}
-	}
-	 $http({
+	$http({
 		url: 'process.php',
 		method: 'POST',
 		params: {  resourcePath: $scope.resourcePath },
-		headers: { 'Content-Type': 'application/x-www-form-urlencoded' }).success(function(data) { 	
+		headers: { 'Content-Type': 'application/x-www-form-urlencoded' }}).success(function(data) { 	
 		console.log(data);
 		if ( ! data.success) {				
 			if (data.errors.currency) {
