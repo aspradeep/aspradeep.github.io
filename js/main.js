@@ -2,6 +2,7 @@
  * Donate Application
  */
 
+// Define Function to get Query String Values
 function getUrlParameter(param, dummyPath) {
         var sPageURL = dummyPath || window.location.search.substring(1),
             sURLVariables = sPageURL.split(/[&||?]/),
@@ -18,13 +19,14 @@ function getUrlParameter(param, dummyPath) {
 
         return res;
 }
+
 var app = angular.module('donateWebApp', [
 	'ngRoute',
 	'ngSanitize'
 ]);
 
 /**
- * Configure the Routes
+ * Configure App Routes
  */
 app.config(['$routeProvider',"$locationProvider", function ($routeProvider) {
   	$routeProvider
@@ -35,6 +37,9 @@ app.config(['$routeProvider',"$locationProvider", function ($routeProvider) {
 	    .when("/thank-you", {templateUrl: "partials/thankyou.html",controller: "thankyouController"})
 	}]);
 
+/*
+ * Configure App Controllers
+ */
 
 app.controller('homeController', function($scope, $http, srvShareData, $location, srvSaveData, srvSaveTime) {
 	$scope.savedData = srvSaveData.getData();
@@ -71,7 +76,7 @@ app.controller('homeController', function($scope, $http, srvShareData, $location
 		window.location.href = "#/payment";								
 	}
 	$scope.changeCurrency = function(){
-		let currency = document.getElementById('currency').value;
+		var currency = document.getElementById('currency').value;
 		if(currency != ''){
 		  document.getElementById('currhold').innerHTML = currency;
 		}
@@ -109,7 +114,7 @@ app.controller('thankyouController', function($scope, $http, srvShareData, $loca
 		});
 		document.getElementById('responseData').innerHTML = newstring;
 	}else{
-		let resourcePath = getUrlParameter('id');
+		var resourcePath = getUrlParameter('id');
 		$http({
 			url: 'https://test.oppwa.com:443/v1/checkouts/'+resourcePath+'/payment',
 			method: 'GET',			
@@ -150,6 +155,10 @@ app.controller('thankyouController', function($scope, $http, srvShareData, $loca
 		
 });
 
+/*
+ * Configure App Services
+ */
+ 
 app.service('srvShareData', function($window) {
 	var KEY = 'App.SelectedValue';
 
