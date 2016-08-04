@@ -21,7 +21,7 @@
                     <div class="col-md-5" id="amount-group" ng-class="{ 'has-error' : donateForm.amount.$invalid && !donateForm.amount.$pristine }">
                         <div class="input-group">
                           <span class="input-group-addon" id="currhold">USD</span>
-                          <input type="number" class="form-control" placeholder="0.00" max="100" ng-model="amount" name="amount" required>                       
+                          <input type="number" class="form-control" placeholder="0.00" max="100" ng-model="amount" name="amount" autocomplete="off" required>                       
                         </div>
                         <p ng-show="donateForm.amount.$invalid && !donateForm.amount.$pristine" class="help-block">Please Enter an Amount less than 100!</p>
                     </div>

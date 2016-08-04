@@ -18,43 +18,9 @@ function getUrlParameter(param, dummyPath) {
 
         return res;
 }
-
-var http = require('https');
-var querystring = require('querystring');
-
-function request(callback) {
-	var path='/v1/checkouts';
-	var data = querystring.stringify( {
-		'authentication.userId' : '8a8294174b7ecb28014b9699220015cc',
-		'authentication.password' : 'sy6KJsT8',
-		'authentication.entityId' : '8a8294174b7ecb28014b9699220015ca',
-		'amount' : '92.00',
-		'currency' : 'EUR',
-		'paymentType' : 'DB'
-	});
-	var options = {
-		port: 443,
-		host: 'test.oppwa.com',
-		path: path,
-		method: 'POST',
-		headers: {
-			'Content-Type': 'application/x-www-form-urlencoded',
-			'Content-Length': data.length
-		}
-	};
-	var postRequest = http.request(options, function(res) {
-		res.setEncoding('utf8');
-		res.on('data', function (chunk) {
-			jsonRes = JSON.parse(chunk);
-			return callback(jsonRes);
-		});
-	});
-	postRequest.write(data);
-	postRequest.end();
-}
-
 var app = angular.module('donateWebApp', [
-	'ngRoute'
+	'ngRoute',
+	'ngSanitize'
 ]);
 
 /**
@@ -70,16 +36,30 @@ app.config(['$routeProvider',"$locationProvider", function ($routeProvider) {
 	}]);
 
 
-app.controller('homeController', function($scope, $http, srvShareData, $location) {
+app.controller('homeController', function($scope, $http, srvShareData, $location, srvSaveData, srvSaveTime) {
+	$scope.savedData = srvSaveData.getData();
+	var savedtime = srvSaveTime.getData();
+	var d = new Date();
+	var curtime = d.getTime();
+	console.log(savedtime);
+	var difftime = curtime-savedtime;
+	
+	if($scope.savedData != '' && $scope.savedData != null && difftime < 3600000){
+		window.location.href = "#/thank-you";	
+	}
 
 	$scope.submitForm = function(isValid) {
 		if (isValid) {
-			$scope.isSubmitting=true;				
-			request(function(responseData) {
-				console.log(responseData);
-				$scope.isSubmitting=false;		
+			$scope.isSubmitting=true;
+			$http({
+			url: 'https://test.oppwa.com:443/v1/checkouts',
+			method: 'POST',			
+			params: { 'authentication.userId':'8a8294174b7ecb28014b9699220015cc', 'authentication.password':'sy6KJsT8', 'authentication.entityId':'8a8294174b7ecb28014b9699220015ca', 'amount': $scope.amount, 'currency': $scope.currency, 'paymentType':'DB' },
+			headers: { 'Content-Type': 'application/x-www-form-urlencoded'} }).success(function(data) { 	
+				$scope.isSubmitting=false;	
+				//console.log(data.id);
+				$scope.shareMyData(data.id);
 			});
-			
 	   }
 
 	};
@@ -111,47 +91,124 @@ app.controller('paymentController', function($scope, srvShareData) {
 	document.getElementById("paymentForm").appendChild(s);
 });
 
-app.controller('thankyouController', function($scope, $http, srvShareData, $location) {
-	let resourcePath = getUrlParameter('id');
-	$http({
-		url: 'process.php',
-		method: 'POST',
-		params: {  resourcePath: $scope.resourcePath },
-		headers: { 'Content-Type': 'application/x-www-form-urlencoded' }}).success(function(data) { 	
-		console.log(data);
-		if ( ! data.success) {				
-			if (data.errors.currency) {
-				$('#currency-group').addClass('has-error');
-				$('#currency-group .help-block').html(data.errors.currency);
+app.controller('thankyouController', function($scope, $http, srvShareData, $location, srvSaveData, srvSaveTime,$sce) {
+	$scope.savedData = srvSaveData.getData();
+	var savedtime = srvSaveTime.getData();
+	var d = new Date();
+	var curtime = d.getTime();
+	console.log(savedtime);
+	var difftime = curtime-savedtime;
+	
+	if($scope.savedData != '' && $scope.savedData != null && difftime < 3600000){
+		var savedObj = $scope.savedData;
+		var newstring = '<h3>Following are your donation details:</h3>';	
+		jQuery.each(savedObj, function(i, val) {
+			if(i != 'result' && i != 'card' && i != 'threeDSecure' && i != 'risk'){
+				newstring += '<strong>'+i+':</strong> '+val+'<br />';
 			}
-			
-			if (data.errors.amount) {
-				$('#amount-group').addClass('has-error');
-				$('#amount-group .help-block').html(data.errors.amount);
-			}
+		});
+		document.getElementById('responseData').innerHTML = newstring;
+	}else{
+		let resourcePath = getUrlParameter('id');
+		$http({
+			url: 'https://test.oppwa.com:443/v1/checkouts/'+resourcePath+'/payment',
+			method: 'GET',			
+			params: { 'authentication.userId':'8a8294174b7ecb28014b9699220015cc', 'authentication.password':'sy6KJsT8', 'authentication.entityId':'8a8294174b7ecb28014b9699220015ca'},
+			headers: { 'Content-Type': 'application/x-www-form-urlencoded'} }).success(function(data) { 	
+			$scope.isSubmitting=false;	
+			//console.log(data.id);
+			console.log(data);
+			$scope.responseData = data;	
+			var newstring = '<h3>Following are your donation details:</h3>';
+			jQuery.each(data, function(i, val) {
+				if(i != 'result' && i != 'card' && i != 'threeDSecure' && i != 'risk'){
+					newstring += '<strong>'+i+':</strong> '+val+'<br />';
+				}
+			});
+			document.getElementById('responseData').innerHTML = newstring;	
+			$scope.shareMyData(data);
+			var d = new Date();
+			var n = d.getTime();
+			console.log(n);
+			$scope.saveMyTime(n);
+		});	
+	}
+	
+	$scope.dataToShare = [];
+					
+	$scope.shareMyData = function (myValue) {					
+		$scope.dataToShare = myValue;
+		srvSaveData.addData($scope.dataToShare);								
+	}
+	
+	$scope.timeToSave = [];
+					
+	$scope.saveMyTime = function (myValue) {					
+		$scope.timeToSave = myValue;
+		srvSaveTime.addData($scope.timeToSave);								
+	}
 		
-		} else {
-			$scope.responseData = data.responseData;
-		}
-	});
 });
 
 app.service('srvShareData', function($window) {
-        var KEY = 'App.SelectedValue';
+	var KEY = 'App.SelectedValue';
 
-        var addData = function(newObj) {
-            var mydata = $window.sessionStorage.getItem(KEY);
-            mydata = newObj;
-            $window.sessionStorage.setItem(KEY, mydata);
-        };
+	var addData = function(newObj) {
+		var mydata = $window.sessionStorage.getItem(KEY);
+		mydata = newObj;
+		$window.sessionStorage.setItem(KEY, mydata);
+	};
 
-        var getData = function(){
-            var mydata = $window.sessionStorage.getItem(KEY);
-            return mydata;
-        };
+	var getData = function(){
+		var mydata = $window.sessionStorage.getItem(KEY);
+		return mydata;
+	};
 
-        return {
-            addData: addData,
-            getData: getData
-        };
-    });
+	return {
+		addData: addData,
+		getData: getData
+	};
+});
+
+app.service('srvSaveData', function($window) {
+	var KEY = 'App.responseData';
+
+	var addData = function(newObj) {
+		var mydata = $window.sessionStorage.getItem(KEY);
+		mydata = newObj;
+		$window.sessionStorage.setItem(KEY, JSON.stringify(mydata));
+	};
+
+	var getData = function(){
+		var mydata = $window.sessionStorage.getItem(KEY);
+		if (mydata) {
+			mydata = JSON.parse(mydata);
+		}
+		return mydata || [];
+	};
+
+	return {
+		addData: addData,
+		getData: getData
+	};
+});
+
+app.service('srvSaveTime', function($window) {
+	var KEY = 'App.timeStamp';
+
+	var addData = function(newObj) {
+		var mydata = $window.sessionStorage.getItem(KEY);
+		mydata = newObj;
+		$window.sessionStorage.setItem(KEY, mydata);
+	};
+
+	var getData = function(){
+		var mydata = $window.sessionStorage.getItem(KEY);
+		return mydata;
+	};
+
+	return {
+		addData: addData,
+		getData: getData
+	};
+});
